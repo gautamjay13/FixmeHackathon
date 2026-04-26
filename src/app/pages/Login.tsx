@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { Wrench, Zap, Wind, Hammer, Paintbrush, Sparkles, User, Mail, Lock, Phone, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card } from "../components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
-import { useAuth, UserRole } from "../context/AuthContext";
+import { UserRole } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { motion } from "motion/react";
 import { toast } from "sonner";
 import { ThemeToggle } from "../components/ThemeToggle";
@@ -22,6 +23,7 @@ const serviceProviderRoles: { value: UserRole; label: string; icon: any }[] = [
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, signup } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -53,13 +55,16 @@ export default function Login() {
       await login(loginEmail, loginPassword, role);
       toast.success("Login successful!");
       
-      if (loginRole === "customer") {
+      const from = location.state?.from?.pathname;
+      if (from) {
+        navigate(from);
+      } else if (loginRole === "customer") {
         navigate("/");
       } else {
         navigate("/provider-dashboard");
       }
-    } catch (error) {
-      toast.error("Login failed. Please try again.");
+    } catch (error: any) {
+      toast.error(error.message || "Login failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -79,13 +84,16 @@ export default function Login() {
       await signup(signupName, signupEmail, signupPassword, signupPhone, role);
       toast.success("Account created successfully!");
       
-      if (signupRole === "customer") {
+      const from = location.state?.from?.pathname;
+      if (from) {
+        navigate(from);
+      } else if (signupRole === "customer") {
         navigate("/");
       } else {
         navigate("/provider-dashboard");
       }
-    } catch (error) {
-      toast.error("Signup failed. Please try again.");
+    } catch (error: any) {
+      toast.error(error.message || "Signup failed. Please try again.");
     } finally {
       setIsLoading(false);
     }

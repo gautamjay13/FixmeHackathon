@@ -1,22 +1,10 @@
 import { useNavigate } from "react-router";
-import { MapPin, Wrench, Zap, Wind, Hammer, Paintbrush, Sparkles, Menu, User, Clock, LogOut } from "lucide-react";
-import { ThemeToggle } from "../components/ThemeToggle";
+import { MapPin, Wrench, Zap, Wind, Hammer, Paintbrush, Sparkles, CheckCircle2 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { useApp, Service } from "../context/AppContext";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { motion } from "motion/react";
-import { ImageWithFallback } from "../components/figma/ImageWithFallback";
-import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu";
-import { CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 const services: Service[] = [
@@ -70,7 +58,7 @@ const iconMap = {
 export default function Home() {
   const navigate = useNavigate();
   const { setSelectedService, bookings } = useApp();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   const handleServiceSelect = (service: Service) => {
     if (!isAuthenticated) {
@@ -82,77 +70,8 @@ export default function Home() {
     navigate("/describe-problem");
   };
 
-  const handleLogout = () => {
-    logout();
-  };
-
   return (
     <div className="min-h-screen">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-2 rounded-xl">
-              <Wrench className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
-              FixNow
-            </h1>
-          </div>
-          <div className="flex items-center gap-2">
-            {isAuthenticated && (
-              <Button variant="ghost" size="icon" onClick={() => navigate("/bookings")}>
-                <Clock className="h-5 w-5" />
-              </Button>
-            )}
-            <ThemeToggle />
-            {isAuthenticated && user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={user.avatar} alt={user.name} />
-                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user.name}</p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {user.email}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate("/bookings")}>
-                    <Clock className="mr-2 h-4 w-4" />
-                    My Bookings
-                  </DropdownMenuItem>
-                  {user.role !== "customer" && (
-                    <DropdownMenuItem onClick={() => navigate("/provider-dashboard")}>
-                      <Wrench className="mr-2 h-4 w-4" />
-                      Provider Dashboard
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Button onClick={() => navigate("/login")}>
-                <User className="h-5 w-5 mr-2" />
-                Login
-              </Button>
-            )}
-          </div>
-        </div>
-      </header>
-
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white dark:from-zinc-900 dark:to-zinc-950 py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

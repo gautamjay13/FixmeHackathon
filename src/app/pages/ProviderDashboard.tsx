@@ -1,13 +1,11 @@
 import { useNavigate } from "react-router";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { 
   Home, 
   Clock, 
   DollarSign, 
   Star, 
   TrendingUp, 
-  Bell,
-  LogOut,
   Settings,
   CheckCircle2,
   AlertCircle,
@@ -15,9 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Badge } from "../components/ui/badge";
-import { ThemeToggle } from "../components/ThemeToggle";
 import { motion } from "motion/react";
 import { Progress } from "../components/ui/progress";
 
@@ -63,8 +59,8 @@ export default function ProviderDashboard() {
     return null;
   }
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/login");
   };
 
@@ -77,33 +73,6 @@ export default function ProviderDashboard() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Avatar className="w-10 h-10 border-2 border-blue-500">
-              <AvatarImage src={user.avatar} />
-              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <div>
-              <h1 className="font-semibold text-zinc-900 dark:text-white">
-                {user.name}
-              </h1>
-              <p className="text-sm text-zinc-500 capitalize">{user.role.replace("-", " ")}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon">
-              <Bell className="w-5 h-5" />
-            </Button>
-            <ThemeToggle />
-            <Button variant="ghost" size="icon" onClick={handleLogout}>
-              <LogOut className="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
-      </header>
-
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Grid */}
