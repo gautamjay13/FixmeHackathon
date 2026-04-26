@@ -73,5 +73,5 @@ FixNow connects users with **trusted plumbers, electricians, and repair workers*
 
 ## ⭐ Support
 
-Give a ⭐ if you like this project!
+Give a ⭐ if you like this project!.
 
