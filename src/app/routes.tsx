@@ -9,6 +9,9 @@ import Invoice from "./pages/Invoice";
 import BookingHistory from "./pages/BookingHistory";
 import Login from "./pages/Login";
 import ProviderDashboard from "./pages/ProviderDashboard";
+import Schedule from "./pages/Schedule";
+import Earnings from "./pages/Earnings";
+import Profile from "./pages/Profile";
 
 export const router = createBrowserRouter([
   {
@@ -24,6 +27,9 @@ export const router = createBrowserRouter([
       { path: "invoice/:bookingId", Component: Invoice },
       { path: "bookings", Component: BookingHistory },
       { path: "provider-dashboard", Component: ProviderDashboard },
+      { path: "schedule", Component: Schedule },
+      { path: "earnings", Component: Earnings },
+      { path: "profile", Component: Profile },
     ],
   },
 ]);

@@ -1,74 +1,104 @@
 import { useNavigate } from "react-router";
 import { useAuth } from "../hooks/useAuth";
-import { 
-  Home, 
-  Clock, 
-  DollarSign, 
-  Star, 
-  TrendingUp, 
+import {
+  Home,
+  Clock,
+  DollarSign,
+  Star,
+  TrendingUp,
   Settings,
   CheckCircle2,
   AlertCircle,
-  Navigation
+  Navigation,
+  Loader2,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { Progress } from "../components/ui/progress";
+import { useJobs } from "../hooks/useJobs";
+import { useStats } from "../hooks/useStats";
+import { useOnlineStatus } from "../hooks/useOnlineStatus";
 
-const mockJobs = [
-  {
-    id: "1",
-    customer: "Priya Sharma",
-    service: "Emergency Leak Repair",
-    address: "123 MG Road, Bangalore",
-    time: "2:30 PM Today",
-    amount: "₹650",
-    status: "pending",
-    distance: "1.2 km",
-  },
-  {
-    id: "2",
-    customer: "Rahul Verma",
-    service: "AC Installation",
-    address: "456 Park Street, Mumbai",
-    time: "4:00 PM Today",
-    amount: "₹1,200",
-    status: "pending",
-    distance: "2.5 km",
-  },
-  {
-    id: "3",
-    customer: "Anita Desai",
-    service: "Electrical Repair",
-    address: "789 Lake View, Delhi",
-    time: "Completed",
-    amount: "₹450",
-    status: "completed",
-    distance: "3.1 km",
-  },
-];
+// ── Skeleton component (replaces spinner per spec) ────────────────────────────
+function JobSkeleton() {
+  return (
+    <Card className="p-6 animate-pulse">
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1 space-y-3">
+          <div className="h-4 bg-zinc-200 dark:bg-zinc-700 rounded w-1/3" />
+          <div className="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-1/2" />
+          <div className="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-2/3" />
+          <div className="flex gap-4">
+            <div className="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-20" />
+            <div className="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-16" />
+          </div>
+        </div>
+        <div className="text-right space-y-2">
+          <div className="h-6 bg-zinc-200 dark:bg-zinc-700 rounded w-16 ml-auto" />
+          <div className="h-8 bg-zinc-200 dark:bg-zinc-700 rounded w-24" />
+        </div>
+      </div>
+    </Card>
+  );
+}
 
 export default function ProviderDashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
+  // ── Online status ─────────────────────────────────────────────────────────
+  const { isOnline, toggling, toggleOnlineStatus } = useOnlineStatus(true);
+
+  // ── Stats (fetched first so we can pass refetch to useJobs) ───────────────
+  const { stats, loading: statsLoading, jobProgress, earningsProgress, refetch: refetchStats } = useStats();
+
+  // ── Jobs ──────────────────────────────────────────────────────────────────
+  const { jobs, loading: jobsLoading, acceptJob, rejectJob, completeJob } = useJobs(
+    isOnline,
+    refetchStats // re-fetch stats after any job state change
+  );
+
+  // ── Guard ─────────────────────────────────────────────────────────────────
   if (!user || user.role === "customer") {
     navigate("/login");
     return null;
   }
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login");
-  };
+  // ── Stats cards (live data) ───────────────────────────────────────────────
+  const statCards = [
+    {
+      label: "Today's Jobs",
+      value: statsLoading ? "—" : stats.pendingJobs + stats.acceptedJobs + stats.completedJobs,
+      icon: Clock,
+      color: "text-blue-600",
+    },
+    {
+      label: "Total Earnings",
+      value: statsLoading ? "—" : `₹${stats.totalEarnings.toLocaleString("en-IN")}`,
+      icon: DollarSign,
+      color: "text-green-600",
+    },
+    {
+      label: "Rating",
+      value: user.rating?.toFixed(1) || "5.0",
+      icon: Star,
+      color: "text-yellow-600",
+    },
+    {
+      label: "Jobs Done",
+      value: statsLoading ? "—" : stats.completedJobs,
+      icon: TrendingUp,
+      color: "text-purple-600",
+    },
+  ];
 
-  const stats = [
-    { label: "Today's Jobs", value: "5", icon: Clock, color: "text-blue-600" },
-    { label: "Total Earnings", value: "₹3,450", icon: DollarSign, color: "text-green-600" },
-    { label: "Rating", value: user.rating?.toFixed(1) || "5.0", icon: Star, color: "text-yellow-600" },
-    { label: "Jobs Done", value: user.completedJobs?.toString() || "0", icon: TrendingUp, color: "text-purple-600" },
+  // ── Jobs to display (pending + active + completed, excluding rejected) ─────
+  const displayJobs = [
+    ...jobs.pending,
+    ...jobs.active,
+    ...jobs.completed,
   ];
 
   return (
@@ -77,7 +107,7 @@ export default function ProviderDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {stats.map((stat, i) => {
+          {statCards.map((stat, i) => {
             const Icon = stat.icon;
             return (
               <motion.div
@@ -115,15 +145,30 @@ export default function ProviderDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-semibold text-lg text-zinc-900 dark:text-white mb-1">
-                  You're Online
+                  {isOnline ? "You're Online" : "You're Offline"}
                 </h3>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  Ready to accept new jobs
+                  {isOnline
+                    ? "Ready to accept new jobs"
+                    : "Go online to start receiving job requests"}
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                <Button variant="outline">Go Offline</Button>
+                <div
+                  className={`w-3 h-3 rounded-full ${
+                    isOnline ? "bg-green-500 animate-pulse" : "bg-zinc-400"
+                  }`}
+                />
+                <Button
+                  variant="outline"
+                  onClick={toggleOnlineStatus}
+                  disabled={toggling}
+                >
+                  {toggling ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : null}
+                  {isOnline ? "Go Offline" : "Go Online"}
+                </Button>
               </div>
             </div>
           </Card>
@@ -143,66 +188,120 @@ export default function ProviderDashboard() {
             </div>
 
             <div className="space-y-4">
-              {mockJobs.map((job, i) => (
-                <motion.div
-                  key={job.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                >
-                  <Card className="p-6 hover:shadow-lg transition-all">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold text-lg text-zinc-900 dark:text-white">
-                            {job.customer}
-                          </h3>
-                          <Badge
-                            variant={job.status === "completed" ? "secondary" : "default"}
-                          >
-                            {job.status === "completed" ? (
-                              <CheckCircle2 className="w-3 h-3 mr-1" />
-                            ) : (
-                              <AlertCircle className="w-3 h-3 mr-1" />
-                            )}
-                            {job.status}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-2">
-                          {job.service}
-                        </p>
-                        <p className="text-sm text-zinc-500 flex items-center gap-1 mb-2">
-                          <Home className="w-4 h-4" />
-                          {job.address}
-                        </p>
-                        <div className="flex items-center gap-4 text-sm text-zinc-500">
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            {job.time}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Navigation className="w-4 h-4" />
-                            {job.distance}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-2">
-                          {job.amount}
-                        </p>
-                        {job.status === "pending" && (
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
-                              Reject
-                            </Button>
-                            <Button size="sm">Accept</Button>
+              {/* Loading skeletons */}
+              {jobsLoading && displayJobs.length === 0 && (
+                <>
+                  <JobSkeleton />
+                  <JobSkeleton />
+                  <JobSkeleton />
+                </>
+              )}
+
+              {/* Offline — no pending jobs message */}
+              {!isOnline && jobs.active.length === 0 && jobs.completed.length === 0 && (
+                <Card className="p-8 text-center">
+                  <p className="text-zinc-500 dark:text-zinc-400">
+                    You're offline. Go online to see incoming job requests.
+                  </p>
+                </Card>
+              )}
+
+              {/* Empty state */}
+              {!jobsLoading && isOnline && displayJobs.length === 0 && (
+                <Card className="p-8 text-center">
+                  <p className="text-zinc-500 dark:text-zinc-400">
+                    No job requests right now. Check back soon!
+                  </p>
+                </Card>
+              )}
+
+              <AnimatePresence>
+                {displayJobs.map((job, i) => (
+                  <motion.div
+                    key={job._id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20, height: 0, marginBottom: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                  >
+                    <Card className="p-6 hover:shadow-lg transition-all">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold text-lg text-zinc-900 dark:text-white">
+                              {job.customerName}
+                            </h3>
+                            <Badge
+                              variant={
+                                job.status === "completed"
+                                  ? "secondary"
+                                  : job.status === "accepted"
+                                  ? "default"
+                                  : "default"
+                              }
+                            >
+                              {job.status === "completed" ? (
+                                <CheckCircle2 className="w-3 h-3 mr-1" />
+                              ) : (
+                                <AlertCircle className="w-3 h-3 mr-1" />
+                              )}
+                              {job.status}
+                            </Badge>
                           </div>
-                        )}
+                          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-2">
+                            {job.serviceType}
+                          </p>
+                          <p className="text-sm text-zinc-500 flex items-center gap-1 mb-2">
+                            <Home className="w-4 h-4" />
+                            {job.address}
+                          </p>
+                          <div className="flex items-center gap-4 text-sm text-zinc-500">
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-4 h-4" />
+                              {job.scheduledTime}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Navigation className="w-4 h-4" />
+                              {job.distanceKm} km
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                            ₹{job.price.toLocaleString("en-IN")}
+                          </p>
+                          {job.status === "pending" && (
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => rejectJob(job._id)}
+                              >
+                                Reject
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => acceptJob(job._id)}
+                              >
+                                Accept
+                              </Button>
+                            </div>
+                          )}
+                          {job.status === "accepted" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => completeJob(job._id)}
+                            >
+                              Mark Complete
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </Card>
-                </motion.div>
-              ))}
+                    </Card>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           </div>
 
@@ -221,17 +320,29 @@ export default function ProviderDashboard() {
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-zinc-600 dark:text-zinc-400">Jobs Completed</span>
-                      <span className="font-medium text-zinc-900 dark:text-white">15/25</span>
+                      <span className="text-zinc-600 dark:text-zinc-400">
+                        Jobs Completed
+                      </span>
+                      <span className="font-medium text-zinc-900 dark:text-white">
+                        {statsLoading ? "…" : `${stats.completedJobs}/${stats.jobTarget}`}
+                      </span>
                     </div>
-                    <Progress value={60} />
+                    <Progress value={statsLoading ? 0 : jobProgress} />
                   </div>
                   <div>
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-zinc-600 dark:text-zinc-400">Earnings Goal</span>
-                      <span className="font-medium text-zinc-900 dark:text-white">₹8.5k/₹15k</span>
+                      <span className="text-zinc-600 dark:text-zinc-400">
+                        Earnings Goal
+                      </span>
+                      <span className="font-medium text-zinc-900 dark:text-white">
+                        {statsLoading
+                          ? "…"
+                          : `₹${(stats.totalEarnings / 1000).toFixed(1)}k/₹${(
+                              stats.earningsTarget / 1000
+                            ).toFixed(0)}k`}
+                      </span>
                     </div>
-                    <Progress value={56.7} />
+                    <Progress value={statsLoading ? 0 : earningsProgress} />
                   </div>
                 </div>
               </Card>
@@ -248,15 +359,27 @@ export default function ProviderDashboard() {
                   Quick Actions
                 </h3>
                 <div className="space-y-2">
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => navigate("/schedule")}
+                  >
                     <Clock className="w-4 h-4 mr-2" />
                     View Schedule
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => navigate("/earnings")}
+                  >
                     <DollarSign className="w-4 h-4 mr-2" />
                     Earnings History
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => navigate("/profile")}
+                  >
                     <Settings className="w-4 h-4 mr-2" />
                     Profile Settings
                   </Button>

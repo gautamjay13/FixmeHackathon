@@ -18,6 +18,11 @@ const userSchema = new mongoose.Schema({
   coordinates: { lat: Number, lng: Number },
   isVerified: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },
+  isOnline: { type: Boolean, default: true },
+  weeklyGoal: {
+    jobTarget: { type: Number, default: 25 },
+    earningsTarget: { type: Number, default: 15000 }
+  },
   refreshToken: { type: String, select: false },
   otp: {
     code: { type: String, select: false },

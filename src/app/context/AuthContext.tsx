@@ -85,9 +85,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ email, password, role }),
       });
 
-      const data = await res.json();
+    const data = await res.json();
 
       if (!res.ok) {
+        // Show specific validation errors if available
+        if (data.error?.details?.length > 0) {
+          const msgs = data.error.details.map((d: any) => `${d.field.replace('body.', '')}: ${d.message}`).join('\n');
+          throw new Error(msgs);
+        }
         throw new Error(data.message || "Login failed");
       }
 
@@ -124,6 +129,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await res.json();
 
       if (!res.ok) {
+        // Show specific validation errors if available
+        if (data.error?.details?.length > 0) {
+          const msgs = data.error.details.map((d: any) => `${d.field.replace('body.', '')}: ${d.message}`).join('\n');
+          throw new Error(msgs);
+        }
         throw new Error(data.message || "Signup failed");
       }
 

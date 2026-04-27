@@ -21,6 +21,9 @@ const invoiceRoutes = require('./src/routes/invoice.routes');
 const paymentRoutes = require('./src/routes/payment.routes');
 const notificationRoutes = require('./src/routes/notification.routes');
 const adminRoutes = require('./src/routes/admin.routes');
+const jobsRoutes = require('./src/routes/jobs.routes');
+const statsRoutes = require('./src/routes/stats.routes');
+const userStatusRoutes = require('./src/routes/userStatus.routes');
 
 const app = express();
 const server = http.createServer(app);
@@ -67,6 +70,9 @@ app.use('/api/v1/invoices', invoiceRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/jobs', jobsRoutes);
+app.use('/api/v1/stats', statsRoutes);
+app.use('/api/v1/user', userStatusRoutes);
 
 // Base route
 app.get('/', (req, res) => {
